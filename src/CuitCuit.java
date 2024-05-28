@@ -54,7 +54,6 @@ class Graph extends CuitCuit {
     private int size;
     private int[] parent;
     private int[] rank;
-    // private int[] grup;
 
     public Graph(int size) {
         this.size = size;
@@ -62,8 +61,8 @@ class Graph extends CuitCuit {
         parent = new int[size];
         rank = new int[size];
         for (int i = 0; i < size; i++) {
-            parent[i] = i; // Setiap node adalah representatif dari dirinya sendiri
-            rank[i] = 0; // Inisialisasi rank
+            parent[i] = i;
+            rank[i] = 0;
         }
     }
 
@@ -140,7 +139,6 @@ class Graph extends CuitCuit {
                 count++;
             }
         }
-        // grup = new int[count];
         return count;
     }
 
@@ -252,12 +250,88 @@ class Graph extends CuitCuit {
             if (suggest.length - 1 != i) {
                 System.out.print(",");
             }
-
         }
-        // for (String string : suggest) {
-        // System.out.print(string + ",");
-        // }
         System.out.println();
+    }
+
+    public void hobiGrup(Node[] nodes) {
+        int[] groupRoots = new int[size];
+        int groupCount = 0;
+
+        for (int i = 0; i < size; i++) {
+            int root = find(i);
+            boolean found = false;
+            for (int j = 0; j < groupCount; j++) {
+                if (groupRoots[j] == root) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                groupRoots[groupCount++] = root;
+            }
+        }
+
+        String[] groupTopics = new String[groupCount];
+
+        for (int i = 0; i < groupCount; i++) {
+            int root = groupRoots[i];
+            int[] hobbyCounts = new int[100];
+            String[] hobbies = new String[100];
+            int hobbyIndex = 0;
+
+            for (Node node : nodes) {
+                if (find(node.getKey()) == root) {
+                    String[] nodeHobbies = { node.getHobi1(), node.getHobi2(), node.getHobi3() };
+                    for (String hobi : nodeHobbies) {
+                        boolean found = false;
+                        for (int j = 0; j < hobbyIndex; j++) {
+                            if (hobbies[j].equals(hobi)) {
+                                hobbyCounts[j]++;
+                                found = true;
+                                break;
+                            }
+                        }
+                        if (!found) {
+                            hobbies[hobbyIndex] = hobi;
+                            hobbyCounts[hobbyIndex++] = 1;
+                        }
+                    }
+                }
+            }
+
+            int maxCount = 0;
+            for (int j = 0; j < hobbyIndex; j++) {
+                if (hobbyCounts[j] > maxCount) {
+                    maxCount = hobbyCounts[j];
+                }
+            }
+
+            StringBuilder result = new StringBuilder();
+            for (int j = 0; j < hobbyIndex; j++) {
+                if (hobbyCounts[j] == maxCount) {
+                    if (result.length() > 0) {
+                        result.append(",");
+                    }
+                    result.append(hobbies[j]);
+                }
+            }
+            groupTopics[i] = result.toString();
+        }
+
+        for (int i = 0; i < groupCount - 1; i++) {
+            for (int j = i + 1; j < groupCount; j++) {
+                if (groupTopics[i].compareTo(groupTopics[j]) > 0) {
+                    String temp = groupTopics[i];
+                    groupTopics[i] = groupTopics[j];
+                    groupTopics[j] = temp;
+                }
+            }
+        }
+
+        for (int i = 0; i < groupCount; i++) {
+            System.out.println(groupTopics[i]);
+        }
     }
 
 }
@@ -292,21 +366,12 @@ public class CuitCuit {
         return newArr;
     }
 
-    // public Node[] getArrNode() {
-    // return arr;
-    // }
-
-    // static void makeArr(int size) {
-    // arr = new Node[size];
-    // }
-
     public static void main(String[] args) {
         Scanner in = new Scanner(System.in);
         int size = in.nextInt();
         arr = new Node[size];
         int interaksi = in.nextInt();
         int key = 0;
-        String hub;
         Graph a = new Graph(size);
         int count = 0;
 
@@ -329,21 +394,23 @@ public class CuitCuit {
             a.connect(find(nama1, arr), find(nama2, arr));
             find(nama2, arr).follower();
         }
-
-        boolean toogle = false;
-        while (!toogle) {
+        in.nextLine();
+        while (true) {
+            String operasi = in.nextLine();
             if (count > arr.length) {
                 arr = addSize(arr);
             }
+            if (operasi.isEmpty()) {
+                break;
+            }
             a.setNewSize(arr.length);
-            // System.out.println(arr.length);
-            hub = in.next();
-            switch (hub) {
+            String[] res = operasi.split(" ");
+            switch (res[0]) {
                 case "insert":
-                    String nama = in.next();
-                    String hobi1 = in.next();
-                    String hobi2 = in.next();
-                    String hobi3 = in.next();
+                    String nama = res[1];
+                    String hobi1 = res[2];
+                    String hobi2 = res[3];
+                    String hobi3 = res[4];
                     if (count == arr.length) {
                         arr = addSize(arr);
                     }
@@ -354,8 +421,8 @@ public class CuitCuit {
                     count++;
                     break;
                 case "connect":
-                    String nama1 = in.next();
-                    String nama2 = in.next();
+                    String nama1 = res[1];
+                    String nama2 = res[2];
                     System.out.println(a.connect(find(nama1, arr), find(nama2, arr)));
                     find(nama2, arr).follower();
                     break;
@@ -363,30 +430,27 @@ public class CuitCuit {
                     System.out.println(getMostFoll(arr));
                     break;
                 case "mincuit":
-                    String user1 = in.next();
-                    String user2 = in.next();
+                    String user1 = res[1];
+                    String user2 = res[2];
                     Node node1 = find(user1, arr);
                     Node node2 = find(user2, arr);
                     if (node1 == null || node2 == null) {
-                        System.out.println("Node tidak ditemukan.");
+                        System.out.println(-1);
                     } else {
                         System.out.println(a.minCuitUlang(node1, node2));
                     }
                     break;
                 case "numgroup":
-                    System.out.println("Jumlah grup: " + a.countGroups());
+                    System.out.println(a.countGroups());
                     break;
                 case "grouptopic":
+                    a.hobiGrup(arr);
                     break;
-                case "suggest":
-                    String s = in.next();
+                case "suggestfriend":
+                    String s = res[1];
                     a.suggest(find(s, arr));
-                    break;
-                default:
-                    toogle = true;
                     break;
             }
         }
-        a.print();
     }
 }
